@@ -14,46 +14,19 @@
 
 ---
 
-## 2. Label System
+## 2. Standard Labels
 
-Apply **one label from each relevant category** to every issue.
+Apply these labels when creating issues:
 
-### Type (required — pick one)
 | Label | Description |
 |---|---|
-| `type: feature` | New functionality or capability |
-| `type: bug` | Something is broken or behaving incorrectly |
-| `type: docs` | Documentation only (guides, README, comments) |
-| `type: refactor` | Code restructuring with no behavior change |
-| `type: research` | Investigation, spike, or proof of concept |
-| `type: chore` | Maintenance, CI/CD, dependency updates |
+| `enhancement` | New features or improvements |
+| `bug` | Error or broken functionality |
+| `documentation` | Changes to README, guides, or code comments |
+| `refactor` | Code cleanup without logic change |
+| `urgent` | Blocks critical workflows |
 
-### Priority (required — pick one)
-| Label | Description |
-|---|---|
-| `priority: critical` | Blocking — must be resolved immediately |
-| `priority: high` | Important — needed for current milestone |
-| `priority: medium` | Should be done soon, but not blocking |
-| `priority: low` | Nice to have, can wait |
-
-### Status (required — update as work progresses)
-| Label | Description |
-|---|---|
-| `status: backlog` | Acknowledged but not yet planned |
-| `status: ready` | Defined, scoped, and ready to be worked on |
-| `status: in-progress` | Actively being worked on |
-| `status: in-review` | Work complete, awaiting review or testing |
-| `status: done` | Verified and closed |
-| `status: blocked` | Cannot proceed — see comments for reason |
-
-### Component (optional — pick all that apply)
-| Label | Description |
-|---|---|
-| `component: frontend` | UI / client-side code |
-| `component: backend` | Server / API / business logic |
-| `component: infra` | Infrastructure, CI/CD, deployment |
-| `component: security` | Security-specific tooling or hardening |
-| `component: data` | Data pipelines, databases, analytics |
+> **Rule**: Every issue must have **at least one** label applied. Use `urgent` alongside any other label when something is blocking.
 
 ---
 
@@ -157,21 +130,20 @@ v<major>.<minor> — <Short Description>
 
 ### Before Writing Code
 1. **Find or create the issue** for the work being done.
-   - If an issue exists → update its status label to `status: in-progress`.
-   - If no issue exists → **create one** using the appropriate template above, assign all required labels, and link it to the correct milestone.
+   - If an issue exists → add a comment that work is starting.
+   - If no issue exists → **create one** using the appropriate template above, assign the correct label(s) from Section 2, and link it to the correct milestone.
 2. **Comment on the issue** with a brief plan of what will be done.
 
 ### While Writing Code
 1. **Reference the issue number** in commit messages: `Fix input validation (#12)`.
 2. If the scope grows or changes, **update the issue description** and acceptance criteria.
-3. If blockers are found, **add the `status: blocked` label** and comment with details.
+3. If blockers are found, **add the `urgent` label** and comment with details about the blocker.
 
 ### After Completing Work
 1. **Update the issue** with a summary comment of what was done.
 2. **Check off acceptance criteria** in the issue body.
-3. **Update the status label** to `status: in-review` or `status: done`.
-4. If the work is fully verified, **close the issue**.
-5. If this was the last issue in a milestone, **notify the user** that the milestone may be ready to close.
+3. If the work is fully verified, **close the issue**.
+4. If this was the last issue in a milestone, **notify the user** that the milestone may be ready to close.
 
 ### Creating Follow-Up Issues
 - If new work is discovered during a session, create new issues immediately.
@@ -184,10 +156,10 @@ v<major>.<minor> — <Short Description>
 
 Run this checklist periodically (or when the user asks for a project status review):
 
-- [ ] Every open issue has **type**, **priority**, and **status** labels.
+- [ ] Every open issue has **at least one** standard label (`enhancement`, `bug`, `documentation`, `refactor`, `urgent`).
 - [ ] Every open issue is assigned to a **milestone**.
-- [ ] No issue has been `status: in-progress` for more than 3 sessions without an update.
-- [ ] Blocked issues have a **comment explaining the blocker**.
+- [ ] No issue has been open for more than 3 sessions without an update comment.
+- [ ] Issues marked `urgent` have a **comment explaining the blocker**.
 - [ ] Completed milestones are **closed**.
 - [ ] There are no orphan issues (issues with no milestone).
 
@@ -197,12 +169,12 @@ Run this checklist periodically (or when the user asks for a project status revi
 
 | Action | What to Do |
 |---|---|
-| Start new work | Create issue → add labels → assign milestone → comment plan |
-| Continue existing work | Find issue → update status to `in-progress` → comment update |
-| Finish work | Comment summary → check acceptance criteria → update status → close |
-| Hit a blocker | Add `status: blocked` → comment with details |
-| Discover new work | Create new issue → link to parent → assign milestone + labels |
-| Project status check | List open milestones → summarize issue counts by status |
+| Start new work | Create issue → add label(s) → assign milestone → comment plan |
+| Continue existing work | Find issue → comment update on progress |
+| Finish work | Comment summary → check acceptance criteria → close issue |
+| Hit a blocker | Add `urgent` label → comment with details |
+| Discover new work | Create new issue → link to parent → assign milestone + label(s) |
+| Project status check | List open milestones → summarize open/closed issues |
 | Milestone complete | Verify all issues closed → close milestone → notify user |
 
 ---
