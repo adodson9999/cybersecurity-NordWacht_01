@@ -5,6 +5,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/container";
 import { CTAModal } from "@/components/cta-modal";
+import { ServicesModal } from "@/components/services-modal";
 
 export function Hero() {
   return (
@@ -81,9 +82,11 @@ export function Hero() {
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </CTAModal>
-            <Button variant="outline" size="xl">
-              See How We Do It
-            </Button>
+            <ServicesModal>
+              <Button variant="outline" size="xl">
+                See How We Do It
+              </Button>
+            </ServicesModal>
           </motion.div>
 
 
