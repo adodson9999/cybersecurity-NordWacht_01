@@ -57,10 +57,7 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground"
           >
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-accent" />
-              <span>Free $2,500 AI Efficiency Audit</span>
-            </div>
+
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-primary" />
               <span>Implementation in Weeks, Not Months</span>
