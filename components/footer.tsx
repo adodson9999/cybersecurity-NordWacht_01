@@ -116,10 +116,10 @@ export function Footer() {
         <div className="mt-16 rounded-xl bg-gradient-to-r from-primary/20 to-secondary/20 p-8 text-center">
           <h3 className="mb-2 text-xl font-bold">Ready to stop wasting human capital?</h3>
           <p className="mb-6 text-muted-foreground">
-            Get your free $2,500 AI Efficiency Audit today
+            Discover how AI automation can transform your business operations
           </p>
           <Button magnetic size="lg">
-            Schedule Your Free Audit
+            Book a Call Today
           </Button>
         </div>
 
