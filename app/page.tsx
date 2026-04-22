@@ -1,6 +1,6 @@
 import { NavBar } from "@/components/nav-bar";
 import { Hero } from "@/components/hero";
-import { ROICalculator } from "@/components/roi-calculator";
+import { ProvenImpact } from "@/components/proven-impact";
 import { AutomationSection } from "@/components/automation-section";
 import { PricingSection } from "@/components/pricing-section";
 import { FAQSection } from "@/components/faq-section";
@@ -13,7 +13,7 @@ export default function Home() {
       <NavBar />
       <main>
         <Hero />
-        <ROICalculator />
+        <ProvenImpact />
         <AutomationSection />
         <PricingSection />
         <FAQSection />
