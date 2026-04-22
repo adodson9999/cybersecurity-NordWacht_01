@@ -40,7 +40,7 @@ export function NavBar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 text-xl font-bold">
             <Shield className="h-7 w-7 text-primary" />
-            <span className="hidden sm:inline">NordWacht</span>
+            <span className="hidden sm:inline">Zander Services</span>
           </Link>
 
           {/* Desktop Navigation */}

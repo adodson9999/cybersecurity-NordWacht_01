@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NordWacht | AI Implementation Agency - Houston TX",
+  title: "Zander Services | AI Implementation Agency - Houston TX",
   description:
-    "Stop wasting human capital. NordWacht delivers AI-powered automation solutions for Houston businesses. Get your free $2,500 AI Efficiency Audit today.",
+    "Stop wasting human capital. Zander Services delivers AI-powered automation solutions for Houston businesses. Book a call today to transform your operations.",
   keywords: [
     "AI automation",
     "Houston AI agency",
@@ -24,19 +24,19 @@ export const metadata: Metadata = {
     "workflow automation",
     "Houston TX",
   ],
-  authors: [{ name: "NordWacht" }],
+  authors: [{ name: "Zander Services" }],
   openGraph: {
-    title: "NordWacht | AI Implementation Agency - Houston TX",
+    title: "Zander Services | AI Implementation Agency - Houston TX",
     description:
       "Stop wasting human capital. AI-powered automation solutions for Houston businesses.",
-    url: "https://nordwacht.com",
-    siteName: "NordWacht",
+    url: "https://zanderservices.com",
+    siteName: "Zander Services",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "NordWacht | AI Implementation Agency",
+    title: "Zander Services | AI Implementation Agency",
     description: "Stop wasting human capital. AI-powered automation for Houston businesses.",
   },
   robots: {

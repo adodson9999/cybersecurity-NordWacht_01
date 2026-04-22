@@ -35,7 +35,7 @@ export function Footer() {
           <div>
             <Link href="/" className="mb-4 flex items-center gap-2 text-xl font-bold">
               <Shield className="h-7 w-7 text-primary" />
-              <span>NordWacht</span>
+              <span>Zander Services</span>
             </Link>
             <p className="mb-6 text-muted-foreground">
               AI Implementation Agency serving Houston businesses. We transform 
@@ -45,11 +45,11 @@ export function Footer() {
             {/* Contact info */}
             <div className="space-y-3">
               <a
-                href="mailto:hello@nordwacht.com"
+                href="mailto:hello@zanderservices.com"
                 className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Mail className="h-4 w-4" />
-                hello@nordwacht.com
+                hello@zanderservices.com
               </a>
               <a
                 href="tel:+17135551234"
@@ -128,7 +128,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border py-8 text-sm text-muted-foreground sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} NordWacht. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Zander Services. All rights reserved.</p>
           <div className="flex gap-6">
             <Link href="/privacy" className="transition-colors hover:text-foreground">
               Privacy Policy
