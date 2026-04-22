@@ -78,11 +78,11 @@ export function CTAModal({ children }: CTAModalProps) {
                           <Sparkles className="h-6 w-6 text-primary" />
                         </div>
                         <Dialog.Title className="text-2xl font-bold">
-                          Get Your Free AI Audit
+                          Book a Call Today
                         </Dialog.Title>
                         <Dialog.Description className="mt-2 text-muted-foreground">
-                          Our $2,500-value audit identifies automation opportunities 
-                          and provides a custom implementation roadmap.
+                          Schedule a consultation to discover how AI automation 
+                          can transform your business operations.
                         </Dialog.Description>
                       </div>
 
@@ -163,7 +163,7 @@ export function CTAModal({ children }: CTAModalProps) {
                           magnetic
                           className="group mt-2 w-full font-bold"
                         >
-                          Schedule My Free Audit
+                          Book My Call
                           <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Button>
                       </form>
@@ -193,7 +193,7 @@ export function CTAModal({ children }: CTAModalProps) {
                       <h3 className="text-xl font-bold">You&apos;re All Set!</h3>
                       <p className="mt-2 text-muted-foreground">
                         Thanks, {name}! Our team will reach out within 24 hours 
-                        to schedule your free AI Efficiency Audit.
+                        to schedule your consultation call.
                       </p>
                       <Dialog.Close asChild>
                         <Button variant="outline" className="mt-6">
