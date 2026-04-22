@@ -1,0 +1,10 @@
+{
+    "project_type": "web_app",
+    "framework": "react",
+    "capabilities": [
+        "terminal",
+        "browser",
+        "filesystem"
+    ],
+    "auto_analyze": true
+}
