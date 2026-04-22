@@ -86,23 +86,7 @@ export function Hero() {
             </Button>
           </motion.div>
 
-          {/* Trust indicators */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="mt-16 border-t border-border pt-8"
-          >
-            <p className="mb-4 text-xs uppercase tracking-wider text-muted-foreground">
-              Trusted by Houston businesses
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-8 opacity-50">
-              <span className="text-lg font-semibold">Enterprise Co</span>
-              <span className="text-lg font-semibold">TechStart</span>
-              <span className="text-lg font-semibold">HealthPlus</span>
-              <span className="text-lg font-semibold">LegalPro</span>
-            </div>
-          </motion.div>
+
         </div>
       </Container>
 
