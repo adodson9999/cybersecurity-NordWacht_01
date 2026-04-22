@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Color Palette - Dark Theme for AI Agency */
+  --color-background: #0F0F0F;
+  --color-foreground: #FFFFFF;
+  --color-primary: #3B82F6;
+  --color-secondary: #8B5CF6;
+  --color-accent: #FFD700;
+  
+  /* Muted variants */
+  --color-muted: #1A1A1A;
+  --color-muted-foreground: #A1A1A1;
+  
+  /* Card styling */
+  --color-card: rgba(255, 255, 255, 0.05);
+  --color-card-foreground: #FFFFFF;
+  
+  /* Border */
+  --color-border: rgba(255, 255, 255, 0.1);
+  
+  /* Glass effect colors */
+  --color-glass: rgba(255, 255, 255, 0.05);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  
+  /* Font families */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--color-primary);
+  color: var(--color-foreground);
+}
+
+/* Glass effect utility */
+.glass {
+  background: var(--color-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-glass-border);
+}
+
+/* Magnetic button effect base */
+.magnetic-hover {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Terminal scrolling animation */
+@keyframes terminal-scroll {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.terminal-scroll {
+  animation: terminal-scroll 20s linear infinite;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Focus ring for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+}
