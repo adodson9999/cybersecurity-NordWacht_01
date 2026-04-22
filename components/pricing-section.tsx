@@ -25,7 +25,7 @@ const pricingTiers = [
     name: "The Core",
     description: "Turn your company into an AI-First Organization",
     price: "$8,000",
-    period: " one-time",
+    period: "/month",
     features: [
       "Everything in The Pilot",
       "Full-Stack Business Integration",
