@@ -5,6 +5,7 @@ import { Shield, Mail, Phone, MapPin } from "lucide-react";
 import { Container } from "@/components/container";
 import { TerminalSimulator } from "@/components/terminal-simulator";
 import { Button } from "@/components/ui/button";
+import { CTAModal } from "@/components/cta-modal";
 
 const neighborhoods = [
   "The Heights",
@@ -18,7 +19,7 @@ const neighborhoods = [
 ];
 
 const quickLinks = [
-  { href: "#services", label: "Services" },
+  { href: "#pricing", label: "Services" },
   { href: "#pricing", label: "Pricing" },
   { href: "#faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
@@ -34,7 +35,7 @@ export function Footer() {
           <div>
             <Link href="/" className="mb-4 flex items-center gap-2 text-xl font-bold">
               <Shield className="h-7 w-7 text-primary" />
-              <span>NordWacht</span>
+              <span>Zander Services</span>
             </Link>
             <p className="mb-6 text-muted-foreground">
               AI Implementation Agency serving Houston businesses. We transform 
@@ -44,11 +45,11 @@ export function Footer() {
             {/* Contact info */}
             <div className="space-y-3">
               <a
-                href="mailto:hello@nordwacht.com"
+                href="mailto:hello@zanderservices.com"
                 className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Mail className="h-4 w-4" />
-                hello@nordwacht.com
+                hello@zanderservices.com
               </a>
               <a
                 href="tel:+17135551234"
@@ -116,16 +117,18 @@ export function Footer() {
         <div className="mt-16 rounded-xl bg-gradient-to-r from-primary/20 to-secondary/20 p-8 text-center">
           <h3 className="mb-2 text-xl font-bold">Ready to stop wasting human capital?</h3>
           <p className="mb-6 text-muted-foreground">
-            Get your free $2,500 AI Efficiency Audit today
+            Discover how AI automation can transform your business operations
           </p>
-          <Button magnetic size="lg">
-            Schedule Your Free Audit
-          </Button>
+          <CTAModal>
+            <Button magnetic size="lg">
+              Book a Call Today
+            </Button>
+          </CTAModal>
         </div>
 
         {/* Bottom bar */}
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border py-8 text-sm text-muted-foreground sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} NordWacht. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Zander Services. All rights reserved.</p>
           <div className="flex gap-6">
             <Link href="/privacy" className="transition-colors hover:text-foreground">
               Privacy Policy

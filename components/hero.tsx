@@ -5,6 +5,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/container";
 import { CTAModal } from "@/components/cta-modal";
+import { ServicesModal } from "@/components/services-modal";
 
 export function Hero() {
   return (
@@ -57,10 +58,7 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground"
           >
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-accent" />
-              <span>Free $2,500 AI Efficiency Audit</span>
-            </div>
+
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-primary" />
               <span>Implementation in Weeks, Not Months</span>
@@ -84,46 +82,18 @@ export function Hero() {
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </CTAModal>
-            <Button variant="outline" size="xl">
-              See How We Do It
-            </Button>
+            <ServicesModal>
+              <Button variant="outline" size="xl">
+                See How We Do It
+              </Button>
+            </ServicesModal>
           </motion.div>
 
-          {/* Trust indicators */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="mt-16 border-t border-border pt-8"
-          >
-            <p className="mb-4 text-xs uppercase tracking-wider text-muted-foreground">
-              Trusted by Houston businesses
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-8 opacity-50">
-              <span className="text-lg font-semibold">Enterprise Co</span>
-              <span className="text-lg font-semibold">TechStart</span>
-              <span className="text-lg font-semibold">HealthPlus</span>
-              <span className="text-lg font-semibold">LegalPro</span>
-            </div>
-          </motion.div>
+
         </div>
       </Container>
 
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.5 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="h-10 w-6 rounded-full border-2 border-muted-foreground/30 p-1"
-        >
-          <div className="h-2 w-full rounded-full bg-muted-foreground/30" />
-        </motion.div>
-      </motion.div>
+
     </section>
   );
 }

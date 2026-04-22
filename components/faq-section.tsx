@@ -30,11 +30,6 @@ const faqs = [
     answer:
       "Every automation includes monitoring, alerting, and fallback procedures. Our team receives instant notifications of any issues and can intervene immediately. Professional and Enterprise plans include dedicated support with guaranteed response times.",
   },
-  {
-    question: "What's included in the free AI Efficiency Audit?",
-    answer:
-      "Our $2,500-value audit includes a deep-dive into your current workflows, identification of automation opportunities, ROI projections, and a custom implementation roadmap. It's completely free with no obligation — we want you to see the potential before committing.",
-  },
 ];
 
 export function FAQSection() {

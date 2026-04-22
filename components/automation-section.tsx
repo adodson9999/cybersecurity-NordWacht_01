@@ -5,6 +5,7 @@ import { FileText, Zap, Clock, AlertCircle, CheckCircle, Bot } from "lucide-reac
 import { Container } from "@/components/container";
 import { ScenarioCard } from "@/components/scenario-card";
 import { Button } from "@/components/ui/button";
+import { ServicesModal } from "@/components/services-modal";
 
 const beforeScenarios = [
   {
@@ -151,9 +152,11 @@ export function AutomationSection() {
           viewport={{ once: true }}
           className="mt-16 text-center"
         >
-          <Button magnetic size="xl" variant="secondary">
-            See How We Do It
-          </Button>
+          <ServicesModal>
+            <Button magnetic size="xl" variant="secondary">
+              See How We Do It
+            </Button>
+          </ServicesModal>
         </motion.div>
       </Container>
     </section>
