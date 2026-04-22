@@ -85,7 +85,7 @@ export function NavBar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="glass border-t border-border md:hidden"
+            className="bg-background border-t border-border md:hidden"
           >
             <Container className="py-6">
               <div className="flex flex-col gap-4">
