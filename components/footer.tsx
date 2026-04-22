@@ -5,6 +5,7 @@ import { Shield, Mail, Phone, MapPin } from "lucide-react";
 import { Container } from "@/components/container";
 import { TerminalSimulator } from "@/components/terminal-simulator";
 import { Button } from "@/components/ui/button";
+import { CTAModal } from "@/components/cta-modal";
 
 const neighborhoods = [
   "The Heights",
@@ -118,9 +119,11 @@ export function Footer() {
           <p className="mb-6 text-muted-foreground">
             Discover how AI automation can transform your business operations
           </p>
-          <Button magnetic size="lg">
-            Book a Call Today
-          </Button>
+          <CTAModal>
+            <Button magnetic size="lg">
+              Book a Call Today
+            </Button>
+          </CTAModal>
         </div>
 
         {/* Bottom bar */}
