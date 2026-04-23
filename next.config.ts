@@ -2,8 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Enable React Compiler for automatic optimizations
-  reactCompiler: true,
-  
+  // Note: Ensure you have the 'babel-plugin-react-compiler' installed
+  experimental: {
+    reactCompiler: true,
+    // If you keep this 'true', you MUST run: npm install critters
+    optimizeCss: true,
+  },
+
   // Image optimization settings
   images: {
     formats: ["image/avif", "image/webp"],
@@ -11,15 +16,13 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
 
-  // Enable experimental features for better performance
-  experimental: {
-    optimizeCss: true,
-  },
-
   // Compiler optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
+
+  // Production font optimization
+  optimizeFonts: true,
 
   // Headers for caching static assets
   async headers() {
