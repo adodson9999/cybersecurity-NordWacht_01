@@ -1,7 +1,7 @@
 # NordWacht — Full Backend Implementation Plan
 
-> **Status**: Draft — pending answers to [Open Questions (§13)](#13-open-questions)
-> **Last updated**: 2026-04-22
+> **Status**: Ready to implement — all open questions resolved
+> **Last updated**: 2026-04-23
 
 ---
 
@@ -19,7 +19,7 @@
 10. [Documentation Structure](#10-documentation-structure)
 11. [SEO / GEO Checklist](#11-seo--geo-checklist)
 12. [Phase 1 vs. Deferred](#12-phase-1-vs-deferred)
-13. [Open Questions](#13-open-questions)
+13. [Resolved Decisions](#13-resolved-decisions)
 
 ---
 
@@ -74,7 +74,7 @@ hero, proven-impact, automation-section, pricing-section, pricing-card, faq-sect
 - No sitemap, robots.txt, RSS feed
 - No privacy/terms pages
 - No blog, services detail, case studies, about, or booking flow
-- No Supabase, Cloudflare Turnstile, or email integration
+- No Supabase or email integration
 
 ---
 
@@ -143,16 +143,21 @@ hero, proven-impact, automation-section, pricing-section, pricing-card, faq-sect
 ```
 Visitor Browser (anonymous, no auth)
         │
-  Cloudflare (DNS, DDoS, Turnstile JS)
+  Cloudflare (DNS, DDoS)
         │
   Vercel (Next.js 15 SSR/SSG)
   Server Components → Supabase (service_role key)
         │
   Supabase
   ├── Postgres (RLS: deny-all anon, service-role writes)
-  ├── Edge Functions (SMTP email, slot gen, booking, cron)
+  ├── Edge Functions (Brevo SMTP, slot gen, booking, cron)
   ├── Storage (images, media, llms.txt)
   └── Studio (admin-only — no UI built)
+        │
+  Email routing:
+  ├── OUTBOUND transactional (booking/contact/reminder) → Brevo SMTP
+  └── INBOUND mail + OUTBOUND replies → Google Workspace
+      (replies to transactional emails land in consultant's Gmail inbox)
 ```
 
 ### 3.2 Directory Structure (target)
@@ -161,7 +166,7 @@ Visitor Browser (anonymous, no auth)
 nordwacht/
 ├── app/
 │   ├── layout.tsx, page.tsx, globals.css     # Existing
-│   ├── contact/page.tsx                       # Existing (add Turnstile)
+│   ├── contact/page.tsx                       # Existing
 │   ├── about/page.tsx
 │   ├── services/page.tsx
 │   ├── services/[slug]/page.tsx
@@ -186,11 +191,12 @@ nordwacht/
 │       ├── booking/create/route.ts
 │       ├── booking/confirm/route.ts
 │       ├── booking/cancel/route.ts
-│       └── booking/reschedule/route.ts
+│       ├── booking/reschedule/route.ts
+│       └── revalidate/route.ts                # On-demand revalidation webhook
 ├── components/
 │   ├── ui/          # Shadcn-pattern primitives (button exists, add input/textarea/select/calendar/toast/badge/card/skeleton/dialog)
 │   ├── booking/     # step-call-type, step-pick-slot, step-enter-info, step-confirm, booking-wizard
-│   ├── forms/       # contact-form, turnstile-widget
+│   ├── forms/       # contact-form
 │   ├── content/     # service-card, case-study-card, blog-post-card, breadcrumbs
 │   ├── seo/         # json-ld structured data components
 │   └── (existing 18 components)
@@ -216,7 +222,7 @@ nordwacht/
 │       └── mark-no-shows/        # Cron: 30min after slot_end
 ├── docs/
 │   ├── schema.md, edge-functions.md, email-templates.md
-│   └── decisions/ (001-no-auth, 002-custom-scheduling, 003-smtp-edge-fn, 004-studio-admin)
+│   └── decisions/ (001-no-auth, 002-custom-scheduling, 003-smtp-edge-fn, 004-studio-admin, 005-workspace-plus-brevo)
 ├── .github/workflows/ci.yml
 ├── README.md, AGENTS.md
 └── .env.example
@@ -229,19 +235,20 @@ nordwacht/
 NEXT_PUBLIC_SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=        # Server-only
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=
-TURNSTILE_SECRET_KEY=             # Server-only
 
 # --- SMTP (Brevo free tier — 300 emails/day) ---
+# Brevo handles OUTBOUND transactional mail only.
+# INBOUND mail + regular outbound replies are handled by Google Workspace (MX records).
 SMTP_HOST=smtp-relay.brevo.com
 SMTP_PORT=587
 SMTP_USER=                        # Brevo SMTP login
-SMTP_PASS=                        # Brevo SMTP key
+SMTP_PASS=                        # Brevo SMTP key (NOT the API key)
 SMTP_FROM_EMAIL=alexander.dodson@zanderservices.org
 SMTP_FROM_NAME=Zander Services
+SMTP_REPLY_TO=alexander.dodson@zanderservices.org  # Replies land in Workspace inbox
 
 ADMIN_EMAIL=alexander.dodson@zanderservices.org
-NEXT_PUBLIC_SITE_URL=             # https://zanderservices.com
+NEXT_PUBLIC_SITE_URL=             # https://zanderservices.org
 
 # --- Revalidation ---
 REVALIDATE_SECRET=                # Shared secret for Supabase webhook → Next.js revalidation
@@ -249,15 +256,56 @@ REVALIDATE_SECRET=                # Shared secret for Supabase webhook → Next.
 
 Secrets live in **Vercel env vars** (per environment) and **Supabase Edge Function secrets** (`supabase secrets set`). Never in the repo.
 
-**Email deliverability DNS records** (add to `zanderservices.org` via Cloudflare):
-- SPF: `TXT @ "v=spf1 include:sendinblue.com ~all"`
-- DKIM: provided by Brevo during domain authentication setup (CNAME records)
-- DMARC: `TXT _dmarc "v=DMARC1; p=quarantine; rua=mailto:alexander.dodson@zanderservices.org"`
+### 3.3.1 Email Deliverability DNS Records
+
+The domain `zanderservices.org` sends transactional email through **Brevo** AND receives/sends regular email through **Google Workspace**. Both services must be authorized in DNS. Add these records via Cloudflare:
+
+**MX records — receive mail via Google Workspace** (Workspace setup provides these; typically one record is sufficient for newer Workspace tenants):
+
+```
+@  MX  1   smtp.google.com
+```
+
+(If your Workspace console shows the legacy 5-record set with `aspmx.l.google.com` etc., use those instead — both forms are valid.)
+
+**SPF — combined, authorizes BOTH Google Workspace AND Brevo** (only ONE SPF record allowed per domain):
+
+```
+@  TXT  "v=spf1 include:_spf.google.com include:sendinblue.com ~all"
+```
+
+> ⚠️ **Critical**: RFC 7208 allows only one SPF record per domain. If Cloudflare already has an SPF record from Workspace setup, **edit it** to add `include:sendinblue.com` — do NOT add a second record. Multiple SPF records break email authentication entirely.
+
+**DKIM — two separate selectors, one per service** (they do not conflict):
+
+```
+# Google Workspace DKIM
+google._domainkey  TXT  "<value from Workspace Admin → Apps → Gmail → Authenticate email>"
+
+# Brevo DKIM
+mail._domainkey    TXT  "<value from Brevo → Senders & IP → Domains → Authenticate>"
+# Brevo may also require a CNAME:
+brevo-code.<domain>  CNAME  <value>.brevo.net
+```
+
+**DMARC — single policy covers all authorized senders above**:
+
+```
+_dmarc  TXT  "v=DMARC1; p=quarantine; rua=mailto:alexander.dodson@zanderservices.org; pct=100; adkim=s; aspf=s"
+```
+
+**Verification checklist** (run after DNS propagation, which can take up to an hour on Cloudflare):
+
+1. Send a test email from Brevo to a Gmail address → open the email → "Show original" → SPF, DKIM, DMARC should all say **PASS**
+2. Send a test email from your Workspace Gmail to a Gmail address → same check, same result
+3. Score the setup at [mail-tester.com](https://www.mail-tester.com) — target ≥ 9/10 for both senders
+
+If either sender fails authentication, booking confirmations will land in spam and leads will quietly bounce. Do not go to production before both senders verify clean.
 
 ### 3.4 Deploy Flow
 
 1. Push to feature branch → PR
-2. GitHub Actions CI: lint + typecheck + test
+2. GitHub Actions CI: lint + typecheck + test (Vitest + Playwright)
 3. Vercel auto-deploys preview per PR
 4. Merge to `main` → Vercel production deploy
 5. Supabase migrations: `supabase db push` (manual initially, CI later)
@@ -478,7 +526,7 @@ CREATE TABLE contact_submissions (
 );
 ```
 
-### 4.5 Communication & Audit Tables
+### 4.5 Communication, Audit, & Config Tables
 
 **communication_log**
 
@@ -524,7 +572,7 @@ CREATE TABLE rate_limits (
 );
 ```
 
-**site_settings** — single-row config table for global settings (meeting link, business info, etc.)
+**site_settings** — key-value config table for global settings (meeting link, business info, etc.)
 
 ```sql
 CREATE TABLE site_settings (
@@ -534,7 +582,7 @@ CREATE TABLE site_settings (
   description text,                   -- Human-readable note for Studio users
   updated_at timestamptz DEFAULT now()
 );
-COMMENT ON TABLE site_settings IS 'Single-row-per-key config table. Editable in Studio. Used by Edge Functions for default meeting link, business contact info, etc.';
+COMMENT ON TABLE site_settings IS 'Key-value config table. Editable in Studio. Used by Edge Functions for default meeting link, business contact info, etc.';
 
 -- Seed with defaults:
 -- INSERT INTO site_settings (key, value, description) VALUES
@@ -583,6 +631,7 @@ CREATE TRIGGER trg_blog_posts_updated BEFORE UPDATE ON blog_posts FOR EACH ROW E
 CREATE TRIGGER trg_call_types_updated BEFORE UPDATE ON call_types FOR EACH ROW EXECUTE FUNCTION fn_updated_at();
 CREATE TRIGGER trg_leads_updated BEFORE UPDATE ON leads FOR EACH ROW EXECUTE FUNCTION fn_updated_at();
 CREATE TRIGGER trg_bookings_updated BEFORE UPDATE ON call_bookings FOR EACH ROW EXECUTE FUNCTION fn_updated_at();
+CREATE TRIGGER trg_site_settings_updated BEFORE UPDATE ON site_settings FOR EACH ROW EXECUTE FUNCTION fn_updated_at();
 ```
 
 ### 4.7 RLS Policies
@@ -601,6 +650,7 @@ ALTER TABLE contact_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE communication_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 
 -- Deny all for anon by default (no policies = deny).
 -- Narrow read-only policies for published content only:
@@ -622,7 +672,7 @@ CREATE POLICY "anon_read_active_call_types" ON call_types FOR SELECT USING (acti
 | Route | Changes Needed |
 |---|---|
 | `/` (home) | Add JSON-LD (Organization, FAQ). Update nav links for new pages. Eventually pull Pricing/Services data from DB |
-| `/contact` | Add Turnstile widget + honeypot field. Form submits to API route → Edge Function. Loading/success/error states |
+| `/contact` | Add honeypot field. Form submits to API route → Edge Function. Loading/success/error states |
 
 ### New Content Pages
 
@@ -694,12 +744,11 @@ Every page must handle: **loading** (skeleton shimmer), **empty** (friendly mess
 
 **Contact Form Flow**:
 1. Visitor fills form (name, email, phone, company, message) + honeypot field
-2. Turnstile widget generates token client-side
-3. Submit → API route → `submit-contact` Edge Function
-4. Edge Function: verify Turnstile token, check rate limit, reject if honeypot filled
-5. Insert into `contact_submissions`
+2. Submit → API route → `submit-contact` Edge Function
+3. Edge Function: check rate limit, reject if honeypot filled
+4. Insert into `contact_submissions`
 6. Send confirmation email to visitor
-7. Send admin-alert email to consultant
+7. Send admin-alert email to consultant (delivered to Workspace inbox)
 8. Consultant reviews in Studio, optionally promotes to `leads` table
 
 **Booking Lead Flow**:
@@ -718,9 +767,10 @@ All CMS content managed directly in Supabase Studio:
    - Supabase webhook fires on INSERT/UPDATE to `services`, `case_studies`, `blog_posts`
    - Webhook calls `POST /api/revalidate?secret=REVALIDATE_SECRET&path=/blog/[slug]`
    - API route validates secret, calls `revalidatePath()` or `revalidateTag()`
+   - Hourly ISR fallback (`revalidate: 3600`) on all content pages as safety net if webhook fails
    - Result: content updates appear on the live site within seconds of publishing
 
-**Blog rendering**: `body` column stores plain Markdown, rendered client-side via `react-markdown` with `remark-gfm` for GitHub-flavored Markdown support (tables, task lists, etc.).
+**Blog rendering**: `body` column stores plain Markdown, rendered via `react-markdown` with `remark-gfm` for GitHub-flavored Markdown support (tables, task lists, etc.) and `rehype-sanitize` for security.
 
 **Image storage**:
 - All runtime images live in Supabase Storage, **not** `/public/` in the repo
@@ -734,19 +784,30 @@ All CMS content managed directly in Supabase Studio:
 
 ### 6.4 Email Flow
 
-All emails sent from Edge Functions via **Brevo SMTP** (free tier, 300 emails/day). Templates are plain HTML with inline CSS for email client compatibility. Sender: `alexander.dodson@zanderservices.org`.
+All transactional emails sent from Edge Functions via **Brevo SMTP** (free tier, 300 emails/day). Templates are plain HTML with inline CSS for email client compatibility.
+
+**Sender identity**:
+- **From**: `"Zander Services" <alexander.dodson@zanderservices.org>`
+- **Reply-To**: `alexander.dodson@zanderservices.org`
+
+Because `alexander.dodson@zanderservices.org` is hosted on **Google Workspace**, replies to any transactional email route directly into the consultant's Gmail inbox with no additional configuration. Leads can simply hit "Reply" on a booking confirmation and reach the consultant at their normal working inbox — no separate support address or forwarding rule required. Brevo handles outbound programmatic sends; Workspace handles the inbox + manual replies.
 
 | Email | Trigger | Recipient | Content |
 |---|---|---|---|
 | Booking confirmation | `create-booking` | Lead | Booking details, .ics attachment, confirm/reschedule/cancel token links |
-| Admin alert (booking) | `create-booking` | Admin | Lead info, booking details, direct link to Studio |
+| Admin alert (booking) | `create-booking` | Admin (Workspace inbox) | Lead info, booking details, direct link to Studio |
 | Contact confirmation | `submit-contact` | Visitor | "We received your message" acknowledgment |
-| Admin alert (contact) | `submit-contact` | Admin | Contact form contents |
+| Admin alert (contact) | `submit-contact` | Admin (Workspace inbox) | Contact form contents |
 | 24h reminder | `send-reminder` cron | Lead | Upcoming call details, reschedule/cancel links |
 | Cancellation confirmation | `cancel-booking` | Lead + Admin | Cancellation details, rebook CTA |
 | Reschedule confirmation | `reschedule-booking` | Lead + Admin | New booking details, updated .ics |
 
 Every sent email is logged in `communication_log` with `type: 'email'`, `direction: 'outbound'`.
+
+**Deliverability monitoring**: Because admin alerts are the consultant's only awareness of new leads/bookings, silent SMTP failures are a launch risk. Mitigations:
+- Edge Functions that send mail MUST log success/failure to `communication_log` with full error payload on failure
+- A daily digest cron (`send-daily-digest`, deferred to Phase 1.5) summarizes the last 24h of bookings + leads as a safety net — if it arrives, the inbox flow is healthy; if it stops arriving, something is broken
+- Brevo dashboard shows bounce rate — check weekly for the first month
 
 ### 6.5 Audit via Triggers
 
@@ -755,17 +816,19 @@ Every sent email is logged in `communication_log` with `type: 'email'`, `directi
 - `actor` defaults to `'admin_studio'` — Edge Functions override to `'system'` by setting a session variable before writes: `SET LOCAL app.actor = 'system'`
 - Trigger reads: `current_setting('app.actor', true)` — falls back to `'admin_studio'` if not set
 
+---
+
 ## 7. Edge Functions Inventory
 
 | Function | Trigger | Inputs | Outputs | Side Effects | Cron? |
 |---|---|---|---|---|---|
 | `get-available-slots` | API call from booking wizard | `call_type_id`, `date_from`, `date_to`, `visitor_timezone` | Array of `{slot_start, slot_end}` in UTC | None (read-only) | No |
-| `create-booking` | API call from booking wizard | Lead info (name, email, phone, company), `call_type_id`, `slot_start`, `timezone`, UTM params, Turnstile token | Booking confirmation + token URLs | Upserts lead, creates booking, sends confirmation email + admin alert, logs to communication_log | No |
+| `create-booking` | API call from booking wizard | Lead info (name, email, phone, company), `call_type_id`, `slot_start`, `timezone`, UTM params | Booking confirmation + token URLs | Upserts lead, creates booking, sends confirmation email via Brevo + admin alert to Workspace inbox, logs to communication_log | No |
 | `confirm-booking` | API call from `/book/confirm/[token]` | `confirmation_token` | Success/error status | Updates booking status → confirmed, logs to communication_log | No |
-| `cancel-booking` | API call from `/book/cancel/[token]` | `cancel_token`, optional `cancel_reason` | Success/error status | Updates booking status → cancelled, sends cancellation emails, logs to communication_log | No |
-| `reschedule-booking` | API call from `/book/reschedule/[token]` | `reschedule_token`, new `slot_start`, `timezone` | New booking confirmation | Cancels old booking, creates new booking with reference to original, sends reschedule emails, logs | No |
-| `submit-contact` | API call from contact form | Form fields + Turnstile token + honeypot | Success/error | Inserts contact_submission, sends confirmation + admin alert emails, logs | No |
-| `send-reminder` | Scheduled cron | None (queries DB) | None | Finds bookings 24h away with status=scheduled/confirmed, sends reminder emails, logs | **Yes — every 15 min** |
+| `cancel-booking` | API call from `/book/cancel/[token]` | `cancel_token`, optional `cancel_reason` | Success/error status | Updates booking status → cancelled, sends cancellation emails via Brevo, logs to communication_log | No |
+| `reschedule-booking` | API call from `/book/reschedule/[token]` | `reschedule_token`, new `slot_start`, `timezone` | New booking confirmation | Cancels old booking, creates new booking with reference to original, sends reschedule emails via Brevo, logs | No |
+| `submit-contact` | API call from contact form | Form fields + honeypot | Success/error | Inserts contact_submission, sends confirmation + admin alert emails via Brevo (admin alert → Workspace inbox), logs | No |
+| `send-reminder` | Scheduled cron | None (queries DB) | None | Finds bookings 24h away with status=scheduled/confirmed, sends reminder emails via Brevo, logs | **Yes — every 15 min** |
 | `mark-no-shows` | Scheduled cron | None (queries DB) | None | Finds bookings where slot_end + 30min < now() AND status=scheduled, sets status=no_show, expires tokens | **Yes — every 30 min** |
 
 **Edge Function Header Convention** — every function file starts with:
@@ -775,8 +838,8 @@ Every sent email is logged in `communication_log` with `type: 'email'`, `directi
  * Trigger: [HTTP POST / Cron / Webhook]
  * Inputs:  [list params]
  * Outputs: [response shape]
- * Side effects: [DB writes, emails sent, logs created]
- * Secrets: [SMTP_*, TURNSTILE_SECRET_KEY, etc.]
+ * Side effects: [DB writes, emails sent via Brevo, logs created]
+ * Secrets: [SMTP_*, etc.]
  */
 ```
 
@@ -788,7 +851,7 @@ Every sent email is logged in `communication_log` with `type: 'email'`, `directi
 
 - **All tables**: RLS enabled, no default policies (= deny all for anon)
 - **Published content tables** (`services`, `case_studies`, `blog_posts`, `call_types`): narrow SELECT policies for anon — only rows matching `status='published'` or `active=true`
-- **All other tables** (`leads`, `call_bookings`, `contact_submissions`, `communication_log`, `audit_log`, `availability_*`, `rate_limits`): zero anon policies = complete deny
+- **All other tables** (`leads`, `call_bookings`, `contact_submissions`, `communication_log`, `audit_log`, `availability_*`, `rate_limits`, `site_settings`): zero anon policies = complete deny
 - **Edge Functions**: use `service_role` key which bypasses RLS entirely
 - **Next.js Server Components**: use `service_role` key server-side for unrestricted reads; never expose to client
 
@@ -804,7 +867,7 @@ Every sent email is logged in `communication_log` with `type: 'email'`, `directi
 - Hidden field (e.g. `website_url`) on all forms, visually hidden via CSS (`position: absolute; left: -9999px`)
 - Edge Function rejects submission silently if honeypot field is filled (returns 200 to avoid tipping off bots)
 
-### 8.4 Rate Limiting
+### 8.3 Rate Limiting
 
 Using the `rate_limits` table in Supabase:
 
@@ -814,7 +877,7 @@ Using the `rate_limits` table in Supabase:
 4. Thresholds: contact form = 5/hour, booking creation = 3/hour, slot queries = 30/hour
 5. Periodic cleanup: cron or inline `DELETE FROM rate_limits WHERE window_start < now() - interval '24 hours'`
 
-### 8.5 Token Security
+### 8.4 Token Security
 
 - Generated via `crypto.randomBytes(24).toString('hex')` → 48-char hex string
 - Stored hashed? **No** — tokens are random and non-guessable; storing plain is acceptable for this scale. If paranoia is desired, store SHA-256 hash and compare on lookup
@@ -822,19 +885,23 @@ Using the `rate_limits` table in Supabase:
 - Auto-expired: `mark-no-shows` cron sets `tokens_expired = true` on past bookings
 - Token lookup: indexed columns for fast retrieval
 
-### 8.6 Secret Management
+### 8.5 Secret Management
 
 | Secret | Stored In | Used By |
 |---|---|---|
 | `SUPABASE_SERVICE_ROLE_KEY` | Vercel env vars | Next.js server components/API routes |
-| `TURNSTILE_SECRET_KEY` | Vercel env vars + Supabase secrets | API routes + Edge Functions |
-| `SMTP_HOST/PORT/USER/PASS` | Supabase secrets | Edge Functions only |
-| `ADMIN_EMAIL` | Supabase secrets | Edge Functions only |
+| `SMTP_HOST/PORT/USER/PASS` | Supabase secrets | Edge Functions only (Brevo) |
+| `SMTP_FROM_EMAIL/NAME/REPLY_TO` | Supabase secrets | Edge Functions only |
+| `ADMIN_EMAIL` | Supabase secrets | Edge Functions only (delivers to Workspace inbox) |
+| `REVALIDATE_SECRET` | Vercel env vars + Supabase webhook config | Next.js `/api/revalidate` + Supabase webhooks |
 | `NEXT_PUBLIC_SUPABASE_URL` | Vercel env vars | Public (safe) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Vercel env vars | Public (safe — RLS denies all) |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Vercel env vars | Public (safe) |
 
 **Rule**: Any key prefixed `NEXT_PUBLIC_` is safe to expose. All others are server-only and must never appear in client bundles.
+
+### 8.6 Email Authentication
+
+All outbound mail from `zanderservices.org` (both Brevo-sent transactional and Workspace-sent personal) must pass SPF, DKIM, and DMARC. See §3.3.1 for exact DNS records. Verification procedure must be run before production launch — failed auth = confirmation emails land in spam = silently missed bookings.
 
 ---
 
@@ -855,6 +922,7 @@ The consultant opens Supabase Studio and uses these tables:
 | Promote contact to lead | Create new row in `leads`, copy info, update `contact_submissions.promoted_to_lead_id` |
 | Manage availability | `availability_rules` / `availability_exceptions` | Add/edit rules or block dates |
 | Publish content | `services`/`case_studies`/`blog_posts` | Set `status` = 'published', set `published_at` |
+| Update global settings | `site_settings` | Edit `value` column (e.g., change default_meeting_link) |
 
 ### 9.2 Saved SQL Snippets
 
@@ -918,11 +986,23 @@ ORDER BY created_at DESC
 LIMIT 50;
 ```
 
+**Email Send Failures (last 7 days)** — deliverability health check
+```sql
+SELECT created_at, subject, metadata
+FROM communication_log
+WHERE type = 'email'
+  AND direction = 'outbound'
+  AND metadata->>'status' = 'failed'
+  AND created_at > now() - interval '7 days'
+ORDER BY created_at DESC;
+```
+
 ### 9.3 Calendar Sync (Manual)
 
 1. Booking confirmation email includes `.ics` file as attachment
-2. Consultant opens email → clicks `.ics` → imports into Google Calendar / Apple Calendar
-3. Future phase: Google Calendar API two-way sync (see §12)
+2. Consultant opens email in Google Workspace Gmail → Gmail auto-detects the `.ics` and offers an "Add to Calendar" button that drops the event directly into Google Calendar
+3. Manual calendar sync is one click in the Workspace Gmail interface — no Google Calendar API integration required for Phase 1
+4. Future phase: Google Calendar API two-way sync (see §12) — with Workspace already in place, OAuth scope and API enablement when we build this is simpler than a greenfield setup
 
 ---
 
@@ -940,7 +1020,9 @@ Lead-gen site for Zander Services. Primary conversion: booking a discovery call.
 - Next.js 15 (App Router) — SSR/SSG, React Server Components
 - Supabase — Postgres, Edge Functions, Storage (no Auth)
 - Vercel — hosting via GitHub OAuth
-- Cloudflare — DNS, DDoS, Turnstile captcha
+- Cloudflare — DNS, DDoS
+- Brevo — transactional email (300/day free)
+- Google Workspace — inbox + replies for alexander.dodson@zanderservices.org
 - Why each piece was chosen (link to docs/decisions/)
 
 ## Quick Start
@@ -958,6 +1040,7 @@ Lead-gen site for Zander Services. Primary conversion: booking a discovery call.
 - npm run build — production build
 - npm run lint — ESLint
 - npm test — Vitest
+- npm run test:e2e — Playwright
 - npx supabase functions serve — local Edge Functions
 
 ## Deploy
@@ -981,12 +1064,14 @@ Last reviewed: [date — must be updated in the same PR as any schema migration]
 3. NO new third-party accounts without explicit approval
 4. Admin workflows happen in Supabase Studio ONLY — no admin UI
 5. ALL public form writes go through Edge Functions — never direct DB inserts from client
+6. Transactional email sends via Brevo SMTP ONLY (not Workspace SMTP, not Gmail SMTP)
+7. Reply-To on all outbound mail = alexander.dodson@zanderservices.org (Workspace inbox)
 
 ## Naming Conventions
 - Tables: snake_case plural (e.g. blog_posts)
 - Columns: snake_case (e.g. slot_start)
 - Edge Functions: kebab-case directories (e.g. create-booking/)
-- Components: PascalCase files (e.g. BookingWizard.tsx) — wait, repo uses kebab-case (booking-wizard.tsx)
+- Components: kebab-case filenames (repo convention — e.g. booking-wizard.tsx)
 - Pages: kebab-case directories matching URL slugs
 
 ## How to Add a New Edge Function
@@ -1004,11 +1089,23 @@ Last reviewed: [date — must be updated in the same PR as any schema migration]
 5. Create listing + detail pages in app/
 6. Update docs/schema.md
 7. Add seed data to supabase/seed.sql
+8. Configure Supabase database webhook → /api/revalidate for on-demand cache refresh
 
 ## How to Add a New Email Template
 1. Add template function to lib/email/templates.ts
 2. Document in docs/email-templates.md
 3. Ensure Edge Function logs to communication_log after sending
+4. From address: SMTP_FROM_EMAIL env var (alexander.dodson@zanderservices.org)
+5. Reply-To address: SMTP_REPLY_TO env var (same — lands in Workspace inbox)
+
+## How to Add a New Email Sender (Future)
+If a new service needs to send mail from the domain (e.g., Mailchimp for newsletter):
+1. Add its DKIM record with a UNIQUE selector (e.g., mailchimp._domainkey)
+   — DO NOT overwrite google._domainkey or mail._domainkey
+2. Update the single SPF record to add the new include (e.g., include:servers.mcsv.net)
+   — DO NOT add a second SPF record
+3. DMARC policy already covers any authorized sender — no change needed
+4. Document the addition in docs/decisions/
 
 ## Scheduling Math
 - All times stored UTC in DB
@@ -1016,17 +1113,21 @@ Last reviewed: [date — must be updated in the same PR as any schema migration]
 - Slot generation: rules - exceptions - existing bookings - buffers
 - Display to visitor in their detected timezone (Intl.DateTimeFormat)
 - Buffer = buffer_before + buffer_after wrapping each booking
+- Minimum lead time: 2 hours (filter out slots < now + 2h)
+- Booking window: 30 days rolling
 
 ## Branding Guide Reference
 See §2 of IMPLEMENTATION_PLAN.md (to be extracted to docs/branding.md)
 
 ## Testing Expectations
-- Unit tests for slot computation logic
-- Integration tests for Edge Functions (mock SMTP)
-- E2E smoke test for booking flow
+- Vitest: unit tests for slot computation logic, email template rendering, token generation
+- Playwright: E2E smoke tests for booking flow, contact form submission
+- Both run in GitHub Actions CI on every PR
+- Integration tests for Edge Functions: mock Brevo SMTP
 
 ## CI Guard
-If any migration file is newer than AGENTS.md "last reviewed" date, CI must fail the PR.
+If any migration file in supabase/migrations/ is newer than AGENTS.md "last reviewed" date,
+CI must fail the PR. This keeps agent documentation in lockstep with schema changes.
 ```
 
 ### 10.3 docs/ Folder
@@ -1040,6 +1141,7 @@ If any migration file is newer than AGENTS.md "last reviewed" date, CI must fail
 | `docs/decisions/002-custom-scheduling.md` | Why build custom instead of Cal.com: portfolio piece, account minimization, full control |
 | `docs/decisions/003-smtp-via-edge-function.md` | Why raw SMTP in Edge Functions vs. Resend/Postmark: cost, account count, simplicity |
 | `docs/decisions/004-studio-admin.md` | Why no admin UI: single user, Supabase Studio is sufficient, avoids auth complexity |
+| `docs/decisions/005-workspace-plus-brevo.md` | Why Google Workspace for inbox + Brevo for transactional: Workspace SMTP requires IP allowlisting (breaks with Supabase Edge Functions' dynamic IPs) or OAuth2 (refresh token complexity); Brevo handles programmatic sends cleanly while Workspace handles the mailbox the consultant actually checks. Both authenticated via separate DKIM selectors under shared SPF record |
 
 ### 10.4 Inline Code Conventions
 
@@ -1056,6 +1158,8 @@ These are **public-facing files** for generative-engine crawlers (distinct from 
 - `/llms-full.txt`: Full detail — all services with descriptions, case study summaries, blog post summaries, FAQs, pricing tiers, booking link
 
 Both served via Next.js route handlers (`app/llms.txt/route.ts`) pulling from Supabase CMS tables.
+
+---
 
 ## 11. SEO / GEO Checklist
 
@@ -1104,7 +1208,7 @@ Every page sets via Next.js `metadata` export:
 | `/llms.txt` | Concise machine-readable summary of the business, services, and contact info |
 | `/llms-full.txt` | Extended version with all content, FAQs, pricing, case study summaries |
 | Structured content | Clear heading hierarchy, FAQ sections with `<details>`/`<summary>` or JSON-LD FAQ |
-| Entity consistency | Same business name, address, phone across all pages and structured data |
+| Entity consistency | Same business name, address, phone, email across all pages and structured data |
 | Topical authority | Blog posts targeting AI implementation topics, interlinked with service pages |
 
 ### 11.5 Local SEO
@@ -1125,27 +1229,30 @@ Every page sets via Next.js `metadata` export:
 - [x] Edge Functions: all 8 listed in §7
 - [x] Booking wizard (`/book` multi-step flow)
 - [x] Token-based confirm/reschedule/cancel pages
-- [x] Contact form with Turnstile + honeypot
+- [x] Contact form with honeypot
 - [x] CMS tables + content pages (services, case studies, blog)
 - [x] About, privacy, terms pages
-- [x] Email flow (SMTP via Edge Functions)
+- [x] Email flow (Brevo SMTP via Edge Functions; Workspace handles inbound/replies)
+- [x] DNS setup: MX (Workspace), combined SPF (Workspace + Brevo), dual DKIM, DMARC
 - [x] Admin playbook with SQL snippets
 - [x] SEO/GEO implementation (sitemap, robots, RSS, JSON-LD, llms.txt)
 - [x] README.md, AGENTS.md, docs/ structure
-- [x] GitHub Actions CI (lint, typecheck, test)
+- [x] GitHub Actions CI (lint, typecheck, Vitest, Playwright)
 - [x] Vercel deploy pipeline
-- [x] Cloudflare DNS + Turnstile setup
+- [x] Cloudflare DNS setup
+- [x] On-demand revalidation via Supabase webhook → `/api/revalidate`
 
 ### Deferred — Future Phases
 
 | Feature | Phase | Notes |
 |---|---|---|
 | **Stripe integration** | 2 | Deposits for paid consultations, productized service packages. Data model already supports `price_display` on `call_types`; add `stripe_price_id` column and payment_status to bookings |
-| **Google Calendar two-way sync** | 2 | OAuth2 integration, webhook for calendar changes. Current `.ics` manual import is sufficient for phase 1. Data model (UTC slots, timezone storage) doesn't block this |
+| **Google Calendar two-way sync** | 2 | OAuth2 integration, webhook for calendar changes. With Google Workspace already in place, API enablement is straightforward. Current `.ics` attachment + Gmail's "Add to Calendar" button is sufficient for phase 1 |
+| **Daily digest email** | 1.5 | Email sent nightly summarizing bookings + leads from last 24h. Safety net for detecting silent SMTP failures — if digest stops arriving, something is broken |
 | **Admin dashboard UI** | 3 | If Studio becomes cumbersome. Would require auth (NextAuth + Supabase Auth). Build on `/admin/*` routes with role-based access |
 | **Client portal** | 3+ | Authenticated area for clients to view project status, documents, invoices. Requires full auth system |
 | **Supabase Realtime** | 2 | Live slot updates during booking (show when a slot gets taken by another visitor). Nice-to-have for high-traffic periods |
-| **Email marketing** | 2 | Newsletter signup, drip campaigns. Would likely bring in a dedicated email service (Resend, Loops) |
+| **Email marketing** | 2 | Newsletter signup, drip campaigns. Would likely bring in a dedicated email service (Mailchimp, Loops, etc.). When added, follow AGENTS.md "How to Add a New Email Sender" — unique DKIM selector, update shared SPF record |
 | **Analytics dashboard** | 2 | Conversion funnel visualization, lead source tracking. Could use Supabase + a charting library, or integrate PostHog/Plausible |
 | **Multi-language** | 3+ | i18n support if expanding beyond English-speaking markets |
 | **Online payments** | 2 | Stripe Checkout for paid discovery calls or implementation deposits |
@@ -1158,30 +1265,60 @@ All open questions have been answered. Decisions are recorded here and propagate
 
 | # | Question | Decision |
 |---|---|---|
-| 1 | SMTP Provider | **Brevo free tier** (300 emails/day). SMTP creds in env vars only. SPF + DKIM + DMARC on `zanderservices.org` (DNS records in §3.3). No Supabase built-in SMTP, no Gmail SMTP |
+| 1 | SMTP Provider | **Brevo free tier** (300 emails/day) for OUTBOUND transactional only. SMTP creds in env vars. No Supabase built-in SMTP, no Gmail/Workspace SMTP (dynamic IPs + OAuth2 complexity) |
 | 2 | Meeting Links | **Static personal URL** from `site_settings` table (§4.5). Per-row override in Studio. Auto-generated Zoom/Meet links deferred |
 | 3 | Booking Lead Time | **2 hours minimum** |
 | 4 | Booking Window | **30-day rolling window** |
 | 5 | Availability | **24/7** — all day, every day. Only blocked by existing bookings + manual exceptions |
 | 6 | Contact Form Fields | **Name, email, phone, company, message** — confirmed as-is |
-| 7 | Blog Format | **Plain Markdown** rendered via `react-markdown` + `remark-gfm` |
+| 7 | Blog Format | **Plain Markdown** rendered via `react-markdown` + `remark-gfm` + `rehype-sanitize` |
 | 8 | Image Storage | **Supabase Storage** — `public-media` bucket (public-read). Images optimized before upload (≤150KB covers, ≤30KB icons, WebP). Naming: `<entity>-<slug>-<variant>.<ext>`. No runtime images in `/public/` |
-| 9 | Domain Email | **alexander.dodson@zanderservices.org** — requires SPF/DKIM/DMARC on `.org` domain |
-| 10 | Revalidation | **On-demand** via Supabase database webhook → `POST /api/revalidate` |
-| 11 | Toast Library | **Sonner** |
+| 9 | Domain Email | **alexander.dodson@zanderservices.org** hosted on **Google Workspace** (pre-existing). SPF/DKIM/DMARC configured per §3.3.1 |
+| 10 | Revalidation | **On-demand** via Supabase database webhook → `POST /api/revalidate` with hourly ISR fallback |
+| 11 | Toast Library | **Sonner**, `position="top-left"` |
 | 12 | Testing | **Vitest** (unit) + **Playwright** (E2E), both in GitHub Actions CI |
+| 13 | Domain email hosting | **Google Workspace** (pre-existing). Receives mail via MX to Google; sends transactional via Brevo; sends personal mail via Gmail. Both services authenticated via separate DKIM selectors (`google._domainkey` and `mail._domainkey`), combined SPF include, single DMARC policy. Workspace SMTP NOT used for transactional (dynamic IPs in Edge Functions + OAuth2 complexity) |
+
+### Accounts Required (6 total)
+
+1. **GitHub** — existing (source control, CI, OAuth for Vercel/Supabase)
+2. **Google Workspace** — existing, already paying (inbox, replies, personal mail for zanderservices.org)
+3. **Supabase** — new, free (DB, Edge Functions, Storage)
+4. **Vercel** — new, free, OAuth via GitHub (hosting)
+5. **Cloudflare** — new, free (DNS, DDoS)
+6. **Brevo** — new, free (transactional SMTP, 300/day)
+
+Total new ongoing cost: $0 (domain renewal ~$10-15/yr if applicable).
 
 ### New Dependencies to Add (Phase 1)
 
 ```bash
 # Runtime
-npm install @supabase/supabase-js sonner react-markdown remark-gfm
+npm install @supabase/supabase-js sonner react-markdown remark-gfm rehype-sanitize
 
 # Dev
 npm install -D vitest @playwright/test supabase
 ```
 
+### Launch Checklist (Pre-Production)
+
+1. [ ] All 6 accounts set up (order: GitHub → Supabase → Vercel → Cloudflare → Brevo; Workspace already exists)
+2. [ ] DNS records added via Cloudflare: MX, combined SPF, google DKIM, brevo DKIM, DMARC (§3.3.1)
+3. [ ] Existing SPF record checked — if Workspace SPF already exists, EDIT to add Brevo, don't add second record
+4. [ ] Brevo sender domain verified (green checkmark in Brevo dashboard)
+5. [ ] Test email from Brevo → Gmail: SPF/DKIM/DMARC all PASS
+6. [ ] Test email from Workspace Gmail → Gmail: SPF/DKIM/DMARC all PASS
+7. [ ] mail-tester.com score ≥ 9/10 for both senders
+8. [ ] All Supabase migrations applied to production project
+9. [ ] All Edge Functions deployed
+10. [ ] All secrets set in Vercel env vars + Supabase secrets
+11. [ ] Supabase database webhooks configured for `services`, `case_studies`, `blog_posts` → `/api/revalidate`
+12. [ ] Seed data loaded: at least one call_type (Discovery Call), 7 availability_rules (24/7), site_settings (default_meeting_link)
+13. [ ] Full booking flow tested end-to-end: book → receive confirmation → click confirm link → reschedule → cancel
+14. [ ] Contact form tested with honeypot
+15. [ ] Cron jobs verified firing: `send-reminder`, `mark-no-shows`
+16. [ ] AGENTS.md "Last reviewed" date set to launch date
+
 ---
 
-> **Next step**: Begin implementing Phase 1 in the order: schema migration → Edge Functions → API routes → pages (booking first, then content, then static).
-
+> **Next step**: Begin implementing Phase 1 in the order: DNS records → schema migration → Edge Functions → API routes → pages (booking first, then content, then static).

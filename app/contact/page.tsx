@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Phone, MapPin, Send } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Send, Loader2, AlertCircle } from "lucide-react";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 const services = [
   "Workflow Automation",
@@ -25,8 +26,11 @@ export default function ContactPage() {
     company: "",
     message: "",
     services: [] as string[],
+    honeypot: "", // hidden field
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleServiceToggle = (service: string) => {
     setFormData((prev) => ({
@@ -37,9 +41,32 @@ export default function ContactPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('submit-contact', {
+        body: {
+          name: formData.name,
+          email: formData.email,
+          company: formData.company,
+          message: formData.message,
+          honeypot: formData.honeypot
+        }
+      });
+
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      
+      setSubmitted(true);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Something went wrong. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -137,6 +164,20 @@ export default function ContactPage() {
                   className="glass rounded-2xl p-8"
                 >
                   <div className="space-y-6">
+                    {/* Honeypot field (hidden from real users) */}
+                    <div className="absolute opacity-0 -z-10 h-0 w-0 overflow-hidden" aria-hidden="true">
+                      <label htmlFor="website-url">Website URL</label>
+                      <input
+                        id="website-url"
+                        type="text"
+                        name="website_url"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={formData.honeypot}
+                        onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
+                      />
+                    </div>
+
                     {/* Name */}
                     <div>
                       <label
@@ -264,14 +305,31 @@ export default function ContactPage() {
                       />
                     </div>
 
+                    {error && (
+                      <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{error}</span>
+                      </div>
+                    )}
+
                     <Button
                       type="submit"
                       size="lg"
                       magnetic
+                      disabled={isSubmitting}
                       className="group w-full font-bold"
                     >
-                      Send Message
-                      <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      {isSubmitting ? (
+                        <>
+                          Sending...
+                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                        </>
+                      ) : (
+                        <>
+                          Send Message
+                          <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>
