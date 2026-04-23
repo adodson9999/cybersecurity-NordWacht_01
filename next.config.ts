@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable React Compiler for automatic optimizations
-  // Note: Ensure you have the 'babel-plugin-react-compiler' installed
+  // Enable experimental features for better performance
   experimental: {
     reactCompiler: true,
-    // If you keep this 'true', you MUST run: npm install critters
     optimizeCss: true,
   },
 
@@ -20,9 +18,6 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
-
-  // Production font optimization
-  optimizeFonts: true,
 
   // Headers for caching static assets
   async headers() {
