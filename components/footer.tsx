@@ -6,6 +6,7 @@ import { Container } from "@/components/container";
 import { TerminalSimulator } from "@/components/terminal-simulator";
 import { Button } from "@/components/ui/button";
 import { CTAModal } from "@/components/cta-modal";
+import { contactInfo } from "@/lib/contact-info";
 
 const neighborhoods = [
   "The Heights",
@@ -38,33 +39,37 @@ export function Footer() {
               <span>Zander Services</span>
             </Link>
             <p className="mb-6 text-muted-foreground">
-              AI Implementation Agency serving Houston businesses. We transform 
-              manual workflows into intelligent automation.
+              {contactInfo.tagline}
             </p>
             
             {/* Contact info */}
             <div className="space-y-3">
               <a
-                href="mailto:hello@zanderservices.com"
+                href={contactInfo.emailLink}
                 className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Mail className="h-4 w-4" />
-                hello@zanderservices.com
+                {contactInfo.email}
               </a>
               <a
-                href="tel:+17135551234"
+                href={contactInfo.phoneLink}
                 className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Phone className="h-4 w-4" />
-                (713) 555-1234
+                {contactInfo.phone}
               </a>
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <a 
+                href={contactInfo.address.mapsLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />
                 <span>
-                  1234 Main Street, Suite 500<br />
-                  Houston, TX 77002
+                  {contactInfo.address.line1}<br />
+                  {contactInfo.address.line2}
                 </span>
-              </div>
+              </a>
             </div>
           </div>
 

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/container";
 import { CTAModal } from "@/components/cta-modal";
 import { cn } from "@/lib/utils";
+import { contactInfo } from "@/lib/contact-info";
+import { Phone, Mail as MailIcon } from "lucide-react";
 
 const navLinks = [
   { href: "#services", label: "Services" },
@@ -43,8 +45,22 @@ export function NavBar() {
             <span className="hidden sm:inline">Zander Services</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden items-center gap-8 md:flex">
+          {/* Desktop Contact & Navigation Wrapper */}
+          <div className="hidden items-center md:flex md:gap-8">
+            {/* Condensed Contact Block */}
+            <div className="hidden lg:flex items-center gap-4 text-xs font-medium text-muted-foreground mr-4">
+              <a href={contactInfo.phoneLink} className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <Phone className="h-3 w-3" />
+                {contactInfo.phone}
+              </a>
+              <a href={contactInfo.emailLink} className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <MailIcon className="h-3 w-3" />
+                Email Us
+              </a>
+            </div>
+
+            {/* Desktop Navigation */}
+            <div className="flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -55,6 +71,7 @@ export function NavBar() {
                 <span className="absolute -bottom-1 left-0 h-px w-0 bg-primary transition-all duration-300 hover:w-full" />
               </Link>
             ))}
+            </div>
           </div>
 
           {/* CTA Button - Desktop */}

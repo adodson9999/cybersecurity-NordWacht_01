@@ -96,7 +96,7 @@ export function AutomationSection() {
             <span className="gradient-text">Seamless Automation</span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            See how Houston businesses transform their operations with our AI implementation
+            See how Houston area businesses transform their operations with our AI implementation
           </p>
         </motion.div>
 

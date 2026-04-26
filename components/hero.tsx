@@ -26,7 +26,7 @@ export function Hero() {
             className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
           >
             <Sparkles className="h-4 w-4" />
-            <span>AI Implementation Agency — Houston TX</span>
+            <span>AI Implementation Agency — Montgomery & Houston Area</span>
           </motion.div>
 
           {/* Main Headline */}
@@ -65,7 +65,7 @@ export function Hero() {
             </div>
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-secondary" />
-              <span>Houston-Based Team</span>
+              <span>Montgomery & Houston Area Team</span>
             </div>
           </motion.div>
 

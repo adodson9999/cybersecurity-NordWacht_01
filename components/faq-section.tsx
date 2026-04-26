@@ -8,7 +8,7 @@ const faqs = [
   {
     question: "How long does AI implementation typically take?",
     answer:
-      "Most implementations are completed in 4-8 weeks, depending on complexity. We focus on quick wins first — you'll see initial automations running within the first 2 weeks. Our Houston-based team works directly with your staff to ensure minimal disruption.",
+      "Most implementations are completed in 4-8 weeks, depending on complexity. We focus on quick wins first — you'll see initial automations running within the first 2 weeks. Our Montgomery & Houston area team works directly with your staff to ensure minimal disruption.",
   },
   {
     question: "What ROI can we expect from AI automation?",

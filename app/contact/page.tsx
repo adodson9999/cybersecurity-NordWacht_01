@@ -10,6 +10,7 @@ import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import { contactInfo } from "@/lib/contact-info";
 
 const services = [
   "Workflow Automation",
@@ -114,10 +115,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold">Email Us</h3>
                     <a
-                      href="mailto:hello@nordwacht.com"
+                      href={contactInfo.emailLink}
                       className="text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      hello@nordwacht.com
+                      {contactInfo.email}
                     </a>
                   </div>
                 </div>
@@ -129,10 +130,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold">Call Us</h3>
                     <a
-                      href="tel:+17135551234"
+                      href={contactInfo.phoneLink}
                       className="text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      (713) 555-1234
+                      {contactInfo.phone}
                     </a>
                   </div>
                 </div>
@@ -143,10 +144,15 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold">Visit Us</h3>
-                    <p className="text-muted-foreground">
-                      1234 Main Street, Suite 500<br />
-                      Houston, TX 77002
-                    </p>
+                    <a 
+                      href={contactInfo.address.mapsLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground transition-colors inline-block"
+                    >
+                      {contactInfo.address.line1}<br />
+                      {contactInfo.address.line2}
+                    </a>
                   </div>
                 </div>
               </div>

@@ -18,22 +18,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Zander Services | AI Implementation Agency - Houston TX",
+  title: "Zander Services | AI Implementation Agency - Montgomery & Houston Area",
   description:
-    "Stop wasting human capital. Zander Services delivers AI-powered automation solutions for Houston businesses. Book a call today to transform your operations.",
+    "Stop wasting human capital. Zander Services delivers AI-powered automation solutions for Montgomery and the greater Houston area. Book a call today to transform your operations.",
   keywords: [
     "AI automation",
     "Houston AI agency",
+    "Montgomery AI agency",
     "business automation",
     "AI implementation",
     "workflow automation",
+    "Montgomery TX",
     "Houston TX",
   ],
   authors: [{ name: "Zander Services" }],
   openGraph: {
-    title: "Zander Services | AI Implementation Agency - Houston TX",
+    title: "Zander Services | AI Implementation Agency - Montgomery & Houston Area",
     description:
-      "Stop wasting human capital. AI-powered automation solutions for Houston businesses.",
+      "Stop wasting human capital. AI-powered automation solutions for Montgomery and the greater Houston area.",
     url: "https://zanderservices.com",
     siteName: "Zander Services",
     locale: "en_US",
@@ -42,7 +44,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Zander Services | AI Implementation Agency",
-    description: "Stop wasting human capital. AI-powered automation for Houston businesses.",
+    description: "Stop wasting human capital. AI-powered automation for Montgomery and the greater Houston area.",
   },
   robots: {
     index: true,
