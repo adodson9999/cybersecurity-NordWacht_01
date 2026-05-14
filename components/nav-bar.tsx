@@ -13,7 +13,6 @@ import { Phone, Mail as MailIcon } from "lucide-react";
 
 const navLinks = [
   { href: "#services", label: "Services" },
-  { href: "#pricing", label: "Pricing" },
   { href: "#faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ];
