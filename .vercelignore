@@ -1,0 +1,17 @@
+# Build output — Vercel builds this itself
+.next/
+out/
+build/
+
+# Dependencies — Vercel installs these
+node_modules/
+
+# Local env files — use Vercel environment variables instead
+.env
+.env*.local
+
+# Dev/debug artifacts
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
