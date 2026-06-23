@@ -4,8 +4,6 @@ import { motion } from "framer-motion";
 import { FileText, Zap, Clock, AlertCircle, CheckCircle, Bot } from "lucide-react";
 import { Container } from "@/components/container";
 import { ScenarioCard } from "@/components/scenario-card";
-import { Button } from "@/components/ui/button";
-import { ServicesModal } from "@/components/services-modal";
 
 const beforeScenarios = [
   {
@@ -144,20 +142,6 @@ export function AutomationSection() {
             </div>
           </div>
         </div>
-
-        {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-16 text-center"
-        >
-          <ServicesModal>
-            <Button magnetic size="xl" variant="secondary">
-              See How We Do It
-            </Button>
-          </ServicesModal>
-        </motion.div>
       </Container>
     </section>
   );

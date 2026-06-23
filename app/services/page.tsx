@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { Container } from "@/components/container";
@@ -12,12 +11,16 @@ export const metadata = {
   description: "Explore our comprehensive suite of AI automation and cybersecurity services tailored for your business.",
 };
 
+type ServiceCard = {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+};
+
 export default async function ServicesIndexPage() {
-  const { data: services } = await supabase
-    .from("services")
-    .select("id, title, slug, summary, icon_name, display_order")
-    .eq("status", "published")
-    .order("display_order", { ascending: true });
+  // Content backend removed — no services to render. Shows the empty state below.
+  const services: ServiceCard[] = [];
 
   return (
     <>

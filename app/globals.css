@@ -18,6 +18,10 @@
   
   /* Border */
   --color-border: rgba(255, 255, 255, 0.1);
+
+  /* Destructive (errors, cancel actions) */
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
   
   /* Glass effect colors */
   --color-glass: rgba(255, 255, 255, 0.05);

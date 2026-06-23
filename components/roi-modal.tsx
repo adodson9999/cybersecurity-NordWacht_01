@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ROICalculator } from "@/components/roi-calculator";
 import { CTAModal } from "@/components/cta-modal";
-import { ServicesModal } from "@/components/services-modal";
 
 interface ROIModalProps {
   children: React.ReactNode;
@@ -84,15 +83,6 @@ export function ROIModal({ children }: ROIModalProps) {
                           <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Button>
                       </CTAModal>
-                      <ServicesModal>
-                        <Button
-                          variant="ghost"
-                          size="lg"
-                          className="w-full border-2 border-[#50C878] text-white hover:bg-[#50C878]/10 sm:w-auto"
-                        >
-                          Services
-                        </Button>
-                      </ServicesModal>
                     </div>
                   </div>
                 </div>

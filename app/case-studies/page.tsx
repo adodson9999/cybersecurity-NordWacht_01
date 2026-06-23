@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { Container } from "@/components/container";
@@ -12,12 +11,18 @@ export const metadata = {
   description: "See how NordWacht has transformed businesses through automation and advanced security protocols.",
 };
 
+type CaseStudyCard = {
+  id: string;
+  title: string;
+  slug: string;
+  client_name: string;
+  results_summary: string;
+  cover_image: string | null;
+};
+
 export default async function CaseStudiesIndexPage() {
-  const { data: studies } = await supabase
-    .from("case_studies")
-    .select("id, title, slug, client_name, results_summary, cover_image, published_at")
-    .eq("status", "published")
-    .order("published_at", { ascending: false });
+  // Content backend removed — no case studies to render. Shows the empty state below.
+  const studies: CaseStudyCard[] = [];
 
   return (
     <>

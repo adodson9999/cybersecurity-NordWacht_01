@@ -9,7 +9,6 @@ import { Footer } from "@/components/footer";
 import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
 import { contactInfo } from "@/lib/contact-info";
 
 const services = [
@@ -42,29 +41,39 @@ export default function ContactPage() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Bot trap — silently ignore submissions that fill the hidden honeypot.
+    if (formData.honeypot) return;
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('submit-contact', {
-        body: {
-          name: formData.name,
-          email: formData.email,
-          company: formData.company,
-          message: formData.message,
-          honeypot: formData.honeypot
-        }
-      });
+      // No backend: hand off to the visitor's email client via mailto.
+      const servicesLine = formData.services.length
+        ? `Services of interest: ${formData.services.join(", ")}\n\n`
+        : "";
+      const subject = `New inquiry from ${formData.name}`;
+      const body =
+        `Name: ${formData.name}\n` +
+        `Email: ${formData.email}\n` +
+        `Company: ${formData.company || "—"}\n\n` +
+        servicesLine +
+        formData.message;
 
-      if (fnError) throw fnError;
-      if (data?.error) throw new Error(data.error);
-      
+      const mailto = `mailto:${contactInfo.email}?subject=${encodeURIComponent(
+        subject
+      )}&body=${encodeURIComponent(body)}`;
+
+      window.location.href = mailto;
       setSubmitted(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || 'Something went wrong. Please try again later.');
+      setError(
+        `Could not open your email client. Please email us directly at ${contactInfo.email}.`
+      );
     } finally {
       setIsSubmitting(false);
     }

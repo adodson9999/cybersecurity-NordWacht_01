@@ -12,10 +12,11 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-white hover:bg-primary/90",
         secondary: "bg-secondary text-white hover:bg-secondary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive",
         outline: "border border-border bg-transparent hover:bg-card hover:text-foreground",
         ghost: "hover:bg-card hover:text-foreground",
         accent: "bg-accent text-background hover:bg-accent/90",
-        destructive: "bg-red-600 text-white hover:bg-red-600/90",
       },
       size: {
         default: "h-10 px-6 py-2",
@@ -58,6 +59,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const useMagnetic = magnetic && !asChild;
+
+    if (asChild) {
+      return (
+        <Slot
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+    }
 
     const handleMouseMove = (e: MouseEvent<HTMLButtonElement>) => {
       onMouseMove?.(e);

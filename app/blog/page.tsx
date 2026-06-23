@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { Container } from "@/components/container";
@@ -13,12 +12,18 @@ export const metadata = {
   description: "Read the latest thoughts on AI automation, cybersecurity, and tech leadership.",
 };
 
+type BlogPostCard = {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  published_at: string;
+  cover_image: string | null;
+};
+
 export default async function BlogIndexPage() {
-  const { data: posts } = await supabase
-    .from("blog_posts")
-    .select("id, title, slug, summary, published_at, cover_image")
-    .eq("status", "published")
-    .order("published_at", { ascending: false });
+  // Content backend removed — no posts to render. Shows the empty state below.
+  const posts: BlogPostCard[] = [];
 
   return (
     <>
