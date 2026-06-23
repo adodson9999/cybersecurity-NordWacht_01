@@ -372,6 +372,7 @@ export default function ContactPage() {
                         company: "",
                         message: "",
                         services: [],
+                        honeypot: "",
                       });
                     }}
                   >

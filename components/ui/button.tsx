@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { forwardRef, useRef, useState, type MouseEvent } from "react";
 
@@ -14,6 +15,7 @@ const buttonVariants = cva(
         outline: "border border-border bg-transparent hover:bg-card hover:text-foreground",
         ghost: "hover:bg-card hover:text-foreground",
         accent: "bg-accent text-background hover:bg-accent/90",
+        destructive: "bg-red-600 text-white hover:bg-red-600/90",
       },
       size: {
         default: "h-10 px-6 py-2",
@@ -32,46 +34,69 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
   magnetic?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, magnetic = false, children, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      magnetic = false,
+      children,
+      onMouseMove,
+      onMouseLeave,
+      style,
+      ...props
+    },
+    ref
+  ) => {
+    const Comp = asChild ? Slot : "button";
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [position, setPosition] = useState({ x: 0, y: 0 });
+    const useMagnetic = magnetic && !asChild;
 
     const handleMouseMove = (e: MouseEvent<HTMLButtonElement>) => {
-      if (!magnetic || !buttonRef.current) return;
-      
+      onMouseMove?.(e);
+      if (!useMagnetic || !buttonRef.current) return;
+
       const rect = buttonRef.current.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-      
+
       const deltaX = (e.clientX - centerX) * 0.2;
       const deltaY = (e.clientY - centerY) * 0.2;
-      
+
       setPosition({ x: deltaX, y: deltaY });
     };
 
-    const handleMouseLeave = () => {
+    const handleMouseLeave = (e: MouseEvent<HTMLButtonElement>) => {
+      onMouseLeave?.(e);
+      if (!useMagnetic) return;
       setPosition({ x: 0, y: 0 });
     };
 
     return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }), magnetic && "magnetic-hover")}
-        ref={magnetic ? buttonRef : ref}
+      <Comp
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          useMagnetic && "magnetic-hover"
+        )}
+        ref={useMagnetic ? buttonRef : ref}
         style={
-          magnetic
-            ? { transform: `translate(${position.x}px, ${position.y}px)` }
-            : undefined
+          useMagnetic
+            ? { ...style, transform: `translate(${position.x}px, ${position.y}px)` }
+            : style
         }
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         {...props}
       >
         {children}
-      </button>
+      </Comp>
     );
   }
 );
